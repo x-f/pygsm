@@ -574,6 +574,45 @@ class GsmModem(object):
         # remove the message that has been waiting
         # longest from the queue, and return it
         return self.incoming_queue.pop(0)
+        
+    def ussd(self, cmd, read_term=None, read_timeout=None, write_term="\r", raise_errors=True):
+        """Sends the USSD command to the carrier, and returns the
+           answer string or None."""
+        
+        res = None
+       
+        # Lock the modem so we're not interupted
+        with self.modem_lock:
+
+            self._write("ATD" + cmd.__str__() + write_term)
+            lines = self.device.read_lines(
+                read_term=read_term,
+                read_timeout=read_timeout)
+
+            read_term="+CUSD"
+            read_timeout=None
+            buffer = []
+            
+            while(True):
+                buf = self.device._read(
+                read_term=read_term,
+                read_timeout=read_timeout)
+
+                buf = buf.strip()
+                buffer.append(buf)
+
+                if read_term == None and buf.find(':') == 0:
+                    try:
+                        res = re.split('.*[\d+],"(.*)",[\d+]', buffer[1])[1]
+                        break
+                    except:
+                        res = buffer
+                        break
+                
+                if buf.startswith("+CUSD"):
+                    read_term=None
+
+        return res
 
 
 if __name__ == "__main__":
