@@ -30,7 +30,22 @@ class DeviceWrapper(object):
                     # not a valid value, just remove
                     kwargs.pop(key)
 
-        self.device = serial.Serial(*args, **kwargs)
+        try:
+            if "tcp" in kwargs and kwargs['tcp']:
+                self.tcp = kwargs.pop("tcp")
+                self.device = serial.serial_for_url(
+                                                    "socket://%s" % self.tcp,
+                                                    do_not_open=False
+                                                    *args, 
+                                                    **kwargs)
+                self.device.setTimeout(3)
+                self.device.setWriteTimeout(3)
+            else:
+                self.device = serial.Serial(*args, **kwargs)
+
+        except serial.SerialException, err:
+            raise(err)
+
         self.logger = logger
 
     def isOpen(self):
