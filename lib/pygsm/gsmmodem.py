@@ -11,6 +11,7 @@ import time
 import errors
 import threading
 import gsmcodecs
+from serial import SerialException
 from devicewrapper import DeviceWrapper
 from pdusmshandler import PduSmsHandler
 from textsmshandler import TextSmsHandler
@@ -92,7 +93,7 @@ class GsmModem(object):
         mode = "PDU"
         if "mode" in kwargs:
             mode = kwargs.pop("mode")
-        
+
         # if a ready-made device was provided, store it -- self.connect
         # will see that we're already connected, and do nothing. we'll
         # just assume it quacks like a serial port
@@ -123,7 +124,12 @@ class GsmModem(object):
             self.smshandler = PduSmsHandler(self)
         # boot the device on init, to fail as
         # early as possible if it can't be opened
-        self.boot()
+        try:
+            self.boot()
+        except errors.GsmError, err:
+            raise(err)
+        except SerialException, err:
+            raise(err)
     
     
     LOG_LEVELS = {
@@ -210,13 +216,16 @@ class GsmModem(object):
         """initialize the modem configuration with settings needed to process
            commands and send/receive SMS.
         """
-        
         # set some sensible defaults, to make
         # the various modems more consistant
-        self.command("ATE0",      raise_errors=False) # echo off
-        self.command("AT+CMEE=1", raise_errors=False) # useful error messages
-        self.command("AT+WIND=0", raise_errors=False) # disable notifications
-        self.command("AT+CSMS=1", raise_errors=False) # set SMS mode to phase 2+
+        try:
+            self.command("ATE0",      raise_errors=True, read_timeout=20) # echo off
+            self.command("AT+CMEE=1", raise_errors=False) # useful error messages
+            self.command("AT+WIND=0", raise_errors=False) # disable notifications
+            self.command("AT+CSMS=1", raise_errors=False) # set SMS mode to phase 2+
+        except errors.GsmError, err:
+            raise(err)
+
         self.command(self.smshandler.get_mode_cmd()      ) # make sure in PDU mode
 
         # enable new message notification
@@ -237,10 +246,16 @@ class GsmModem(object):
             self.command("AT+CFUN=1")
         else:
             # else just verify connection
-            self.connect()
+            try:
+                self.connect()
+            except SerialException, err:
+                raise(err)
 
         # In both cases, reset the modem's config
-        self.set_modem_config()        
+        try:
+            self.set_modem_config()
+        except errors.GsmError, err:
+            raise(err)
 
         # And check for any waiting messages PRIOR to setting
         # the CNMI call--this is not supported by all modems--
@@ -402,7 +417,7 @@ class GsmModem(object):
         return lines
 
 
-    def query(self, cmd, prefix=None):
+    def query(self, cmd, prefix=None, read_timeout=None):
         """Issues a single AT command to the modem, and returns the relevant
            part of the response. This only works for commands that return a
            single line followed by "OK", but conveniently, this covers almost
@@ -412,8 +427,10 @@ class GsmModem(object):
 
         # issue the command, which might return incoming
         # messages, but we'll leave them in the queue
-        out = self.command(cmd)
-
+        try:
+            out = self.command(cmd, read_timeout)
+        except errors.GsmError, err:
+            raise(err)
         # the only valid response to a "query" is a
         # single line followed by "OK". if all looks
         # well, return just the single line
