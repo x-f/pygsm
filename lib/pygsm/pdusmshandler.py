@@ -6,6 +6,7 @@ import traceback
 import errors, message
 import re
 from smshandler import SmsHandler
+from time import sleep
 
 class PduSmsHandler(SmsHandler):
     CMGL_MATCHER =re.compile(r'^\+CMGL:.*?$')
@@ -34,7 +35,16 @@ class PduSmsHandler(SmsHandler):
                 )
 
         for pdu in pdus:
-            self._send_pdu(pdu)
+            n = 5
+            while(n):
+                try:
+                    self._send_pdu(pdu)
+                    n = 0
+                except Exception, err:
+                    print(err)
+                    n -= 1
+                    sleep(3)
+            sleep(3)
         return True
             
     def _send_pdu(self, pdu):
@@ -69,13 +79,12 @@ class PduSmsHandler(SmsHandler):
                     # is going on, so allow the error to propagate
                 else:
                     raise
-
             finally:
                 pass
 
         # for all other errors...
         # (likely CMS or CME from device)
-        except Exception:
+        except Exception, err:
             traceback.print_exc()
             # whatever went wrong, break out of the
             # message prompt. if this is missed, all
@@ -86,6 +95,7 @@ class PduSmsHandler(SmsHandler):
             # so DO NOT EVER allow exceptions to propagate
             # (obviously, this sucks. there should be an
             # option, at least, but i'm being cautious)
+            raise(err)
             return None
     
     def parse_incoming_message(self, header_line, line):
