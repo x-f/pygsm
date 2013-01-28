@@ -601,7 +601,7 @@ class GsmModem(object):
         # Lock the modem so we're not interupted
         with self.modem_lock:
 
-            self._write("ATD" + cmd.__str__() + write_term)
+            self._write("AT" + cmd.__str__() + write_term)
             lines = self.device.read_lines(
                 read_term=read_term,
                 read_timeout=read_timeout)
