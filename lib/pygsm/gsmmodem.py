@@ -607,7 +607,7 @@ class GsmModem(object):
                 read_timeout=read_timeout)
 
             read_term="+CUSD"
-            read_timeout=None
+            read_timeout=20
             buffer = []
             
             while(True):

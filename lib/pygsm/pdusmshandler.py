@@ -71,7 +71,7 @@ class PduSmsHandler(SmsHandler):
                 # "SUBSTITUTE" (ctrl+z)), and return True (message sent)
             except errors.GsmReadTimeoutError, err:
                 if err.pending_data[0] == ">":
-                    self.modem.command(pdu_string, write_term=chr(26))
+                    self.modem.command(pdu_string, write_term=chr(26), read_timeout=10)
                     return True
 
                     # a timeout was raised, but no prompt nor
