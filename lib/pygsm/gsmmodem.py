@@ -89,6 +89,7 @@ class GsmModem(object):
 
         if "logger" in kwargs:
             self.logger = kwargs.pop("logger")
+            print "logger 1"
         
         mode = "PDU"
         if "mode" in kwargs:
@@ -160,11 +161,13 @@ class GsmModem(object):
         
         if hasattr(self, "logger"):
             self.logger(self, str_, type_)
+            # print "logger 2"
     
     
     @staticmethod
     def logger(_modem, message_, type_):
-        print "%8s %s" % (type_, message_)
+        # print "%8s %s" % (type_, message_)
+        pass
     
     
     def connect(self, reconnect=False):

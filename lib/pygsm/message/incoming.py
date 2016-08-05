@@ -7,7 +7,7 @@ import pytz
 
 
 class IncomingMessage(object):
-    def __init__(self, device, sender, sent, text):
+    def __init__(self, device, sender, sent, text, index=None):
 
         # move the arguments into "private" attrs,
         # to try to prevent from from being modified
@@ -15,6 +15,7 @@ class IncomingMessage(object):
         self._sender = sender
         self._sent   = sent
         self._text   = text
+        self._index   = index
 
         # assume that the message was
         # received right now, since we
@@ -66,3 +67,8 @@ class IncomingMessage(object):
            IncomingMessage was created, which is a close aproximation of when
            the SMS was received."""
         return self._received
+
+    @property
+    def index(self):
+        """..."""
+        return self._index

@@ -138,7 +138,7 @@ class TextSmsHandler(SmsHandler):
             msg_text=msg_buf.getvalue().strip()
 
             # now create message
-            messages.append(self._incoming_to_msg(timestamp,sender,msg_text))
+            messages.append(self._incoming_to_msg(timestamp,sender,msg_text, index))
         return messages
 
     # returns a single message   
@@ -181,7 +181,7 @@ class TextSmsHandler(SmsHandler):
 
         return self._incoming_to_msg(timestamp, sender, text)
             
-    def _incoming_to_msg(self, timestamp, sender, text):
+    def _incoming_to_msg(self, timestamp, sender, text, index=None):
 
         # since neither message notifications nor messages
         # fetched from storage give any indication of their
@@ -209,7 +209,7 @@ class TextSmsHandler(SmsHandler):
         time_sent = None
         if timestamp is not None:
             time_sent = self._parse_incoming_timestamp(timestamp)
-        return message.IncomingMessage(self, sender, time_sent, text)
+        return message.IncomingMessage(self, sender, time_sent, text, index)
          
     def _parse_incoming_timestamp(self, timestamp):
         """Parse a Service Center Time Stamp (SCTS) string into a Python datetime
